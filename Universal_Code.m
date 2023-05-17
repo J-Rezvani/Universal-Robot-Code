@@ -6,12 +6,15 @@ close all
 
 
 %% Parameter Configuration 
+
 n=input("\nHow Many links does your robot? ");
 
 a_dist = sym('a_dist_',[n 1]);
 alpha = sym('alpha_',[n 1]);
 d_dist = sym('d_dist_',[n 1]);
 theta = sym('theta_',[n 1]);
+
+q = sym('q_',[n 1]);
 
 DH= sym('DH_',[1 4]);
 
@@ -31,17 +34,26 @@ for i=1:n
     for j=1:4
         if (j==1 && DH(j)~="x")
             a_dist(i)=DH(j);
+        elseif (j==1 && DH(j)=="x")
+            q(i)=a_dist(i);
         elseif (j==2 && DH(j)~="x")
             alpha(i)=DH(j);
+        elseif (j==2 && DH(j)=="x")
+            q(i)=alpha(i);
         elseif (j==3 && DH(j)~="x")
             d_dist(i)=DH(j);
+        elseif (j==3 && DH(j)=="x")
+            q(i)=d_dist(i);
         elseif (j==4 && DH(j)~="x")
             theta(i)=DH(j);
+        elseif (j==4 && DH(j)=="x")
+            q(i)=theta(i);
         end
     end
 end
-DHM = [a_dist,alpha,d_dist,theta]
 
+DHM = [a_dist,alpha,d_dist,theta]
+q
 
 %% T Matrix Calculation for Forward Kinematics
 
@@ -55,11 +67,13 @@ T=I;
                0                 0                                0                                1];
      T=T*A(:,:,i);
  end
+
  T
  P=T(1:3,end)
 
 
- %% T Generator
+%% T Generator
+
 TT=sym('TT',[4 4 n-1]);
  for i=1:n-1
      for j=i+1:n
@@ -73,6 +87,7 @@ TT=sym('TT',[4 4 n-1]);
 
 
 %% Inverse Kinematics (Pieper Technique)
+
 for i=1:n
     for j=1:n
         if j==1
@@ -83,6 +98,21 @@ for i=1:n
     end
     ITT(:,:,i)=PT(:,:,i)*T;
 end
+
+
+%% Jacubian
+
+J=sym('J',[3,3]);
+for i=1:3
+    for j=1:3
+        J(i,j)=diff(P(i),q(j));
+    end
+end
+
+J
+
+
+%% 
 
 
 
